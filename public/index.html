@@ -617,7 +617,7 @@ document.getElementById('useLocationBtn').addEventListener('click', () => {
         ? 'Location permission denied — allow it in browser settings, or fill in the address instead.'
         : 'Could not get your location — try again, or fill in the address instead.';
     },
-    { enableHighAccuracy:true, timeout:10000 }
+    { enableHighAccuracy:true, timeout:50000 }
   );
 });
 
