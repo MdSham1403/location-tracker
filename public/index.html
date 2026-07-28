@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pin It — Location Saver</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%236C63FF'/%3E%3Cstop offset='100%25' stop-color='%23FF6FB5'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M32 4C19 4 9 14 9 27c0 17 23 33 23 33s23-16 23-33C55 14 45 4 32 4z' fill='url(%23g)'/%3E%3Ccircle cx='32' cy='26' r='9' fill='white'/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --grad-1:#6C63FF;
+    --grad-2:#FF6FB5;
+    --bg:#F6F5FF;
+    --card-bg:#FFFFFF;
+    --ink:#2D2B3A;
+    --coral:#FF6B6B;
+    --amber:#FFB84C;
+    --teal:#28C7B8;
+    --green:#4CD07D;
+    --blue:#4D96FF;
+    --pink:#FF6FB5;
+    --gray:#9B96AE;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    font-family:'Inter', sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    min-height:100vh;
+    padding-bottom:80px;
+  }
+  h1,h2,h3{ font-family:'Fredoka', sans-serif; }
+
+  .hero{
+    background:linear-gradient(120deg, var(--grad-1), var(--grad-2));
+    padding:34px 24px 46px;
+    color:#fff;
+    text-align:center;
+    border-radius:0 0 28px 28px;
+    box-shadow:0 6px 24px rgba(108,99,255,0.25);
+  }
+  .hero h1{
+    font-size:2rem;
+    margin:0 0 6px;
+    letter-spacing:0.5px;
+  }
+  .hero p{
+    margin:0;
+    opacity:0.92;
+    font-size:0.95rem;
+  }
+
+  .container{
+    max-width:1000px;
+    margin:0 auto;
+    padding:0 20px;
+  }
+
+  .toolbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin:22px 0 18px;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .count-badge{
+    font-weight:600;
+    font-size:0.9rem;
+    color:var(--grad-1);
+    background:#ECEAFF;
+    padding:6px 14px;
+    border-radius:20px;
+  }
+  #statusArea{ min-height:0; }
+  .status-msg{
+    font-size:0.85rem;
+    padding:10px 14px;
+    border-radius:12px;
+    margin-bottom:14px;
+  }
+  .status-msg.error{ background:#FFE3E3; color:#C23A3A; }
+  .status-msg.loading{ background:#ECEAFF; color:var(--grad-1); }
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(min(260px, 100%), 1fr));
+    gap:18px;
+  }
+  .place-card{
+    background:var(--card-bg);
+    border-radius:20px;
+    padding:18px 20px;
+    box-shadow:0 4px 18px rgba(45,43,58,0.08);
+    position:relative;
+    border-top:6px solid var(--gray);
+    transition:transform 0.15s ease, box-shadow 0.15s ease;
+    cursor:pointer;
+    min-width:0;
+    overflow-wrap:anywhere;
+    word-break:break-word;
+  }
+  .place-card:hover{
+    transform:translateY(-3px);
+    box-shadow:0 8px 26px rgba(45,43,58,0.14);
+  }
+  .place-card .cat-pill{
+    display:inline-block;
+    font-size:0.7rem;
+    font-weight:600;
+    color:#fff;
+    padding:3px 10px;
+    border-radius:12px;
+    margin-bottom:8px;
+  }
+  .place-card h3{
+    margin:0 0 4px;
+    font-size:1.15rem;
+  }
+  .place-card .rating{
+    color:var(--amber);
+    font-size:0.95rem;
+    margin-bottom:6px;
+  }
+  .place-card .sub-line{
+    font-size:0.84rem;
+    color:#6b687a;
+    margin-bottom:4px;
+    display:flex;
+    align-items:flex-start;
+    gap:5px;
+    overflow-wrap:anywhere;
+    word-break:break-word;
+  }
+  .place-card .sub-line a{
+    color:var(--blue);
+    text-decoration:none;
+    font-weight:600;
+    overflow-wrap:anywhere;
+    word-break:break-word;
+  }
+  .place-card .tags{ margin-top:8px; }
+  .tag-pill{
+    display:inline-block;
+    background:#ECEAFF;
+    color:var(--grad-1);
+    font-size:0.72rem;
+    font-weight:600;
+    padding:3px 10px;
+    border-radius:12px;
+    margin:0 6px 6px 0;
+  }
+  .place-card .notes-preview{
+    font-size:0.85rem;
+    color:#57546a;
+    margin-top:8px;
+    line-height:1.4;
+  }
+  .card-actions{
+    display:flex;
+    gap:8px;
+    margin-top:14px;
+  }
+  .icon-btn{
+    border:none;
+    background:#F1F0FA;
+    color:var(--ink);
+    font-size:0.8rem;
+    font-weight:600;
+    padding:7px 14px;
+    border-radius:10px;
+    cursor:pointer;
+    transition:background 0.15s ease;
+  }
+  .icon-btn:hover{ background:#E3E1F8; }
+  .icon-btn.danger{ color:#C23A3A; }
+  .icon-btn.danger:hover{ background:#FFE3E3; }
+
+  .empty-state{
+    text-align:center;
+    padding:70px 20px;
+    color:#7c7891;
+  }
+  .empty-state .emoji{ font-size:3rem; margin-bottom:10px; }
+  .empty-state h2{ margin:0 0 6px; color:var(--ink); }
+
+  .fab{
+    position:fixed;
+    bottom:28px; right:28px;
+    width:60px; height:60px;
+    border-radius:50%;
+    background:linear-gradient(135deg, var(--grad-1), var(--grad-2));
+    color:#fff;
+    border:none;
+    font-size:1.8rem;
+    box-shadow:0 8px 20px rgba(108,99,255,0.4);
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:transform 0.15s ease;
+  }
+  .fab:hover{ transform:scale(1.06); }
+  .fab:focus-visible{ outline:3px solid var(--grad-2); outline-offset:2px; }
+
+  .modal{
+    position:fixed; inset:0;
+    background:rgba(45,43,58,0.5);
+    display:flex; align-items:center; justify-content:center;
+    padding:20px;
+    z-index:50;
+  }
+  .modal.hidden{ display:none; }
+  .modal-inner{
+    background:#fff;
+    width:100%; max-width:560px;
+    max-height:88vh;
+    overflow-y:auto;
+    border-radius:22px;
+    padding:28px 30px;
+  }
+  .modal-inner h2{
+    margin:0 0 18px;
+    background:linear-gradient(120deg, var(--grad-1), var(--grad-2));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    font-size:1.5rem;
+  }
+  .form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px 16px;
+  }
+  .form-field{ display:flex; flex-direction:column; gap:5px; }
+  .form-field.full{ grid-column:1 / -1; }
+  .form-field label{
+    font-size:0.78rem;
+    font-weight:600;
+    color:#6b687a;
+  }
+  .form-field input, .form-field select, .form-field textarea{
+    font-family:'Inter', sans-serif;
+    font-size:16px;
+    padding:9px 11px;
+    border:2px solid #ECEAFF;
+    border-radius:10px;
+    background:#FAFAFF;
+    color:var(--ink);
+    width:100%;
+  }
+  .form-field textarea{ resize:vertical; min-height:64px; }
+  .form-field input:focus, .form-field select:focus, .form-field textarea:focus{
+    outline:none;
+    border-color:var(--grad-1);
+  }
+  .location-row{
+    display:flex; gap:8px; align-items:center;
+  }
+  .location-row input{ flex:1; font-family:monospace; background:#F1F0FA; }
+  .btn-location{
+    white-space:nowrap;
+    border:none;
+    background:linear-gradient(120deg, var(--teal), var(--blue));
+    color:#fff;
+    font-weight:600;
+    font-size:0.82rem;
+    padding:9px 14px;
+    border-radius:10px;
+    cursor:pointer;
+  }
+  .btn-location:hover{ opacity:0.92; }
+  #locationStatus{ font-size:0.76rem; color:#6b687a; margin-top:3px; }
+
+  .modal-actions{
+    display:flex; justify-content:flex-end; gap:10px; margin-top:22px;
+  }
+  .btn-plain{
+    font-family:'Inter', sans-serif;
+    font-size:0.88rem;
+    background:#F1F0FA;
+    border:none;
+    padding:10px 18px;
+    border-radius:12px;
+    cursor:pointer;
+    font-weight:600;
+    color:var(--ink);
+  }
+  .btn-plain:hover{ background:#E3E1F8; }
+  .btn-primary{
+    font-family:'Inter', sans-serif;
+    font-weight:700;
+    font-size:0.9rem;
+    background:linear-gradient(120deg, var(--grad-1), var(--grad-2));
+    color:#fff;
+    border:none;
+    padding:10px 20px;
+    border-radius:12px;
+    cursor:pointer;
+  }
+  .btn-primary:hover{ opacity:0.92; }
+  .btn-primary:disabled{ opacity:0.6; cursor:default; }
+  .required-mark{ color:var(--coral); }
+
+  @media (max-width:600px){
+    .hero{ padding:22px 16px 32px; border-radius:0 0 20px 20px; }
+    .hero h1{ font-size:1.5rem; }
+    .hero p{ font-size:0.85rem; }
+    .container{ padding:0 14px; }
+    .toolbar{ margin:16px 0 14px; }
+    .grid{ grid-template-columns:1fr; gap:14px; }
+    .place-card{ padding:16px 16px; }
+    .fab{
+      width:54px; height:54px; font-size:1.6rem;
+      bottom:calc(18px + env(safe-area-inset-bottom, 0px));
+      right:18px;
+    }
+    .modal{ padding:0; align-items:flex-end; }
+    .modal-inner{
+      max-width:100%;
+      width:100%;
+      max-height:94vh;
+      border-radius:20px 20px 0 0;
+      padding:20px 18px calc(20px + env(safe-area-inset-bottom, 0px));
+    }
+    .form-grid{ grid-template-columns:1fr; gap:12px; }
+    .location-row{ flex-direction:column; align-items:stretch; }
+    .btn-location{ width:100%; padding:11px 14px; }
+    .modal-actions{ flex-direction:column-reverse; }
+    .modal-actions button{ width:100%; }
+    .card-actions{ flex-wrap:wrap; }
+    .icon-btn{ flex:1; text-align:center; }
+    body{ padding-bottom:100px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>📍 Pin It</h1>
+  <p>Save any place, anytime — one tap and it's on your map.</p>
+</div>
+
+<div class="container">
+  <div id="statusArea"></div>
+  <div class="toolbar">
+    <span class="count-badge" id="countBadge">Loading…</span>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<button class="fab" id="newEntryBtn" title="Save a new place" aria-label="Save a new place">+</button>
+
+<div class="modal hidden" id="modal">
+  <div class="modal-inner">
+    <h2 id="modalTitle">New place</h2>
+    <form id="entryForm">
+      <div class="form-grid">
+        <div class="form-field full">
+          <label>Name <span class="required-mark">*</span></label>
+          <input type="text" id="f_name" required maxlength="120" placeholder="e.g. Marina Beach">
+        </div>
+        <div class="form-field">
+          <label>Category</label>
+          <select id="f_category">
+            <option value="">—</option>
+            <option>Restaurant</option>
+            <option>Cafe</option>
+            <option>Shop</option>
+            <option>Nature</option>
+            <option>Landmark</option>
+            <option>Friend's place</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Rating (1–5)</label>
+          <select id="f_rating">
+            <option value="">—</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+        </div>
+        <div class="form-field full">
+          <label>Address</label>
+          <input type="text" id="f_address" maxlength="200" placeholder="Optional">
+        </div>
+        <div class="form-field full">
+          <label>Coordinates</label>
+          <div class="location-row">
+            <input type="text" id="f_coords" placeholder="Not set" readonly>
+            <button type="button" class="btn-location" id="useLocationBtn">📍 Use current location</button>
+          </div>
+          <div id="locationStatus"></div>
+        </div>
+        <div class="form-field">
+          <label>City / Area</label>
+          <input type="text" id="f_city" maxlength="100">
+        </div>
+        <div class="form-field">
+          <label>Date visited</label>
+          <input type="date" id="f_date">
+        </div>
+        <div class="form-field">
+          <label>Phone</label>
+          <input type="text" id="f_phone" maxlength="40">
+        </div>
+        <div class="form-field">
+          <label>Website</label>
+          <input type="text" id="f_website" maxlength="200" placeholder="https://">
+        </div>
+        <div class="form-field full">
+          <label>Tags (comma separated)</label>
+          <input type="text" id="f_tags" placeholder="quiet, weekend, favorite">
+        </div>
+        <div class="form-field full">
+          <label>Notes</label>
+          <textarea id="f_notes" maxlength="2000"></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-plain" id="cancelBtn">Cancel</button>
+        <button type="submit" class="btn-primary" id="saveBtn">Save place</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const API = '/api/locations';
+let locations = [];
+let editingId = null;
+
+const gridEl = document.getElementById('grid');
+const countBadge = document.getElementById('countBadge');
+const statusArea = document.getElementById('statusArea');
+const modal = document.getElementById('modal');
+const form = document.getElementById('entryForm');
+
+const CATEGORY_COLORS = {
+  'Restaurant': 'var(--coral)',
+  'Cafe': 'var(--amber)',
+  'Shop': 'var(--teal)',
+  'Nature': 'var(--green)',
+  'Landmark': 'var(--blue)',
+  "Friend's place": 'var(--pink)',
+  'Other': 'var(--gray)'
+};
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str == null ? '' : str;
+  return div.innerHTML;
+}
+function showStatus(msg, type){
+  statusArea.innerHTML = `<div class="status-msg ${type}">${escapeHtml(msg)}</div>`;
+}
+function clearStatus(){ statusArea.innerHTML = ''; }
+
+async function loadLocations(){
+  showStatus('Loading your places…', 'loading');
+  try{
+    const res = await fetch(API);
+    if(!res.ok) throw new Error('bad response');
+    locations = await res.json();
+    clearStatus();
+  }catch(err){
+    locations = [];
+    showStatus('Could not reach the server. Is it running?', 'error');
+  }
+  render();
+}
+
+function render(){
+  countBadge.textContent = locations.length === 0
+    ? 'No places yet'
+    : `${locations.length} place${locations.length===1?'':'s'} saved`;
+
+  if(locations.length === 0){
+    gridEl.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1;">
+        <div class="emoji">🗺️</div>
+        <h2>Nothing saved yet</h2>
+        <p>Tap the + button to pin your first place.</p>
+      </div>`;
+    return;
+  }
+
+  const sorted = locations.slice().sort((a,b) => (b.dateAdded||'').localeCompare(a.dateAdded||''));
+
+  gridEl.innerHTML = sorted.map(loc => {
+    const color = CATEGORY_COLORS[loc.category] || 'var(--gray)';
+    let mapLink = '';
+    if(loc.lat != null && loc.lng != null){
+      mapLink = `<div class="sub-line">📍 <a href="https://www.google.com/maps/search/?api=1&query=${loc.lat},${loc.lng}" target="_blank" rel="noopener">${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)} — open in Maps</a></div>`;
+    }else if(loc.address || loc.city){
+      const full = [loc.address, loc.city].filter(Boolean).join(', ');
+      mapLink = `<div class="sub-line">📍 <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(full)}" target="_blank" rel="noopener">${escapeHtml(full)}</a></div>`;
+    }
+    const rating = loc.rating ? `<div class="rating">${'★'.repeat(loc.rating)}${'☆'.repeat(5-loc.rating)}</div>` : '';
+    const tags = (loc.tags && loc.tags.length)
+      ? `<div class="tags">${loc.tags.map(t=>`<span class="tag-pill">${escapeHtml(t)}</span>`).join('')}</div>` : '';
+    const notes = loc.notes ? `<div class="notes-preview">${escapeHtml(loc.notes.slice(0,140))}${loc.notes.length>140?'…':''}</div>` : '';
+    const phoneLine = loc.phone ? `<div class="sub-line">☎️ ${escapeHtml(loc.phone)}</div>` : '';
+    const webLine = loc.website ? `<div class="sub-line">🔗 <a href="${loc.website.startsWith('http')?loc.website:'https://'+loc.website}" target="_blank" rel="noopener">${escapeHtml(loc.website)}</a></div>` : '';
+
+    return `
+      <div class="place-card" data-id="${loc.id}" style="border-top-color:${color}">
+        ${loc.category ? `<span class="cat-pill" style="background:${color}">${escapeHtml(loc.category)}</span>` : ''}
+        <h3>${escapeHtml(loc.name)}</h3>
+        ${rating}
+        ${mapLink}
+        ${phoneLine}
+        ${webLine}
+        ${tags}
+        ${notes}
+        <div class="card-actions">
+          <button class="icon-btn" data-action="edit" data-id="${loc.id}">Edit</button>
+          <button class="icon-btn danger" data-action="delete" data-id="${loc.id}">Delete</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  gridEl.querySelectorAll('[data-action="edit"]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const loc = locations.find(l => l.id === btn.dataset.id);
+      if(loc) openModal(loc);
+    });
+  });
+  gridEl.querySelectorAll('[data-action="delete"]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteLocation(btn.dataset.id);
+    });
+  });
+  gridEl.querySelectorAll('.place-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      if(e.target.closest('a') || e.target.closest('button')) return;
+      const loc = locations.find(l => l.id === card.dataset.id);
+      if(loc) openModal(loc);
+    });
+  });
+}
+
+async function deleteLocation(id){
+  const loc = locations.find(l => l.id === id);
+  if(!loc || !confirm(`Delete "${loc.name}"?`)) return;
+  try{
+    const res = await fetch(`${API}/${id}`, { method:'DELETE' });
+    if(!res.ok && res.status !== 204) throw new Error('delete failed');
+    locations = locations.filter(l => l.id !== id);
+    render();
+  }catch(err){
+    showStatus('Could not delete — please try again.', 'error');
+  }
+}
+
+function openModal(loc){
+  editingId = loc ? loc.id : null;
+  document.getElementById('modalTitle').textContent = loc ? 'Edit place' : 'New place';
+  document.getElementById('f_name').value = loc ? loc.name || '' : '';
+  document.getElementById('f_category').value = loc ? loc.category || '' : '';
+  document.getElementById('f_rating').value = loc && loc.rating ? loc.rating : '';
+  document.getElementById('f_address').value = loc ? loc.address || '' : '';
+  document.getElementById('f_city').value = loc ? loc.city || '' : '';
+  document.getElementById('f_date').value = loc ? loc.dateVisited || '' : '';
+  document.getElementById('f_phone').value = loc ? loc.phone || '' : '';
+  document.getElementById('f_website').value = loc ? loc.website || '' : '';
+  document.getElementById('f_tags').value = loc && loc.tags ? loc.tags.join(', ') : '';
+  document.getElementById('f_notes').value = loc ? loc.notes || '' : '';
+
+  const coordsField = document.getElementById('f_coords');
+  coordsField.value = (loc && loc.lat != null && loc.lng != null) ? `${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)}` : '';
+  coordsField.dataset.lat = loc && loc.lat != null ? loc.lat : '';
+  coordsField.dataset.lng = loc && loc.lng != null ? loc.lng : '';
+  document.getElementById('locationStatus').textContent = '';
+
+  modal.classList.remove('hidden');
+  document.getElementById('f_name').focus();
+}
+function closeModal(){
+  modal.classList.add('hidden');
+  form.reset();
+  document.getElementById('f_coords').dataset.lat = '';
+  document.getElementById('f_coords').dataset.lng = '';
+  document.getElementById('locationStatus').textContent = '';
+  editingId = null;
+}
+
+document.getElementById('newEntryBtn').addEventListener('click', () => openModal(null));
+document.getElementById('cancelBtn').addEventListener('click', closeModal);
+modal.addEventListener('click', (e) => { if(e.target === modal) closeModal(); });
+
+document.getElementById('useLocationBtn').addEventListener('click', () => {
+  const statusEl = document.getElementById('locationStatus');
+  const coordsInput = document.getElementById('f_coords');
+  if(!navigator.geolocation){
+    statusEl.textContent = "Location isn't supported on this device/browser.";
+    return;
+  }
+  statusEl.textContent = 'Getting your location…';
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      coordsInput.value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      coordsInput.dataset.lat = lat;
+      coordsInput.dataset.lng = lng;
+      statusEl.textContent = 'Location captured ✅';
+    },
+    (err) => {
+      statusEl.textContent = err.code === err.PERMISSION_DENIED
+        ? 'Location permission denied — allow it in browser settings, or fill in the address instead.'
+        : 'Could not get your location — try again, or fill in the address instead.';
+    },
+    { enableHighAccuracy:true, timeout:10000 }
+  );
+});
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const name = document.getElementById('f_name').value.trim();
+  if(!name) return;
+
+  const tagsRaw = document.getElementById('f_tags').value.trim();
+  const tags = tagsRaw ? tagsRaw.split(',').map(t=>t.trim()).filter(Boolean) : [];
+  const ratingVal = document.getElementById('f_rating').value;
+  const coordsField = document.getElementById('f_coords');
+  const lat = coordsField.dataset.lat ? parseFloat(coordsField.dataset.lat) : null;
+  const lng = coordsField.dataset.lng ? parseFloat(coordsField.dataset.lng) : null;
+
+  const payload = {
+    name,
+    category: document.getElementById('f_category').value || '',
+    rating: ratingVal ? parseInt(ratingVal,10) : null,
+    address: document.getElementById('f_address').value.trim(),
+    city: document.getElementById('f_city').value.trim(),
+    lat, lng,
+    dateVisited: document.getElementById('f_date').value || '',
+    phone: document.getElementById('f_phone').value.trim(),
+    website: document.getElementById('f_website').value.trim(),
+    tags,
+    notes: document.getElementById('f_notes').value.trim()
+  };
+
+  const saveBtn = document.getElementById('saveBtn');
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Saving…';
+
+  try{
+    const url = editingId ? `${API}/${editingId}` : API;
+    const method = editingId ? 'PUT' : 'POST';
+    const res = await fetch(url, {
+      method,
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if(!res.ok) throw new Error('save failed');
+    const saved = await res.json();
+    if(editingId){
+      locations = locations.map(l => l.id === saved.id ? saved : l);
+    }else{
+      locations.push(saved);
+    }
+    closeModal();
+    render();
+  }catch(err){
+    showStatus('Could not save — please try again.', 'error');
+  }finally{
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save place';
+  }
+});
+
+loadLocations();
+</script>
+</body>
+</html>
