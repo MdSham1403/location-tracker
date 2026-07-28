@@ -98,6 +98,6 @@ app.delete('/api/locations/:id', (req, res) => {
   res.status(204).end();
 });
 
-app.listen(PORT, () => {
-  console.log(`Location Saver running at http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+ console.log(`Location Saver running on port ${PORT}`);
 });
